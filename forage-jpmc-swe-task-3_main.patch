@@ -1,0 +1,116 @@
+From 41d652cbecce8eea188ba50a25fdf69ca59253da Mon Sep 17 00:00:00 2001
+From: Sanat Kumar Gupta <123228827+SKG24@users.noreply.github.com>
+Date: Sun, 14 Jul 2024 01:31:59 +0530
+Subject: [PATCH 1/2] Update Graph.tsx
+
+---
+ src/Graph.tsx | 24 +++++++++++++++---------
+ 1 file changed, 15 insertions(+), 9 deletions(-)
+
+diff --git a/src/Graph.tsx b/src/Graph.tsx
+index 277797d933..3df163dcff 100644
+--- a/src/Graph.tsx
++++ b/src/Graph.tsx
+@@ -23,10 +23,13 @@ class Graph extends Component<IProps, {}> {
+     const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+ 
+     const schema = {
+-      stock: 'string',
+-      top_ask_price: 'float',
+-      top_bid_price: 'float',
++      price_abc: 'float',
++      price_def: 'float',
++      ratio: 'float',
+       timestamp: 'date',
++      upper_bound: 'float',
++      lower_bound: 'float',
++      trigger_alert: 'float',
+     };
+ 
+     if (window.perspective && window.perspective.worker()) {
+@@ -36,22 +39,25 @@ class Graph extends Component<IProps, {}> {
+       // Load the `table` in the `<perspective-viewer>` DOM reference.
+       elem.load(this.table);
+       elem.setAttribute('view', 'y_line');
+-      elem.setAttribute('column-pivots', '["stock"]');
+       elem.setAttribute('row-pivots', '["timestamp"]');
+-      elem.setAttribute('columns', '["top_ask_price"]');
++      elem.setAttribute('columns', '["ratio","lower_bound","upper_bound","trigger_alert"]');
+       elem.setAttribute('aggregates', JSON.stringify({
+-        stock: 'distinctcount',
+-        top_ask_price: 'avg',
+-        top_bid_price: 'avg',
++        price_abc: 'avg',
++        price_def: 'avg',
++        ratio: 'avg',
+         timestamp: 'distinct count',
++        upper_bound: 'avg',
++        lower_bound: 'avg',
++        trigger_alert: 'avg',
+       }));
+     }
+   }
+ 
+   componentDidUpdate() {
+     if (this.table) {
+-      this.table.update(
++      this.table.update([
+         DataManipulator.generateRow(this.props.data),
++        ] as unknown as TableData
+       );
+     }
+   }
+
+From 571b196256b79ed2c3a7cfd72e6ce0a00e52992f Mon Sep 17 00:00:00 2001
+From: Sanat Kumar Gupta <123228827+SKG24@users.noreply.github.com>
+Date: Sun, 14 Jul 2024 01:41:42 +0530
+Subject: [PATCH 2/2] Update DataManipulator.ts
+
+---
+ src/DataManipulator.ts | 27 ++++++++++++++++++++-------
+ 1 file changed, 20 insertions(+), 7 deletions(-)
+
+diff --git a/src/DataManipulator.ts b/src/DataManipulator.ts
+index 7f622955cc..1a9ad8edb6 100644
+--- a/src/DataManipulator.ts
++++ b/src/DataManipulator.ts
+@@ -1,19 +1,32 @@
+ import { ServerRespond } from './DataStreamer';
+ 
+ export interface Row {
+-  stock: string,
+-  top_ask_price: number,
+-  timestamp: Date,
++      price_abc: number,
++      price_def: number,
++      ratio: number,
++      timestamp: Date,
++      upper_bound: number,
++      lower_bound: number,
++      trigger_alert: number | undefined,
+ }
+ 
+ 
+ export class DataManipulator {
+   static generateRow(serverResponds: ServerRespond[]) {
+-    return serverResponds.map((el: any) => {
++     const price_abc: (serverRespond[0].top_ask_price + serverRespond[0].top_bid.price)/2;
++     const price_def: (serverRespond[1].top_ask_price + serverRespond[1].top_bid.price)/2;
++     const ratio: priceABC/priceDEF;
++     const upper_bound: 1+0.05;
++     const lower_bound: 1+0.05;
+       return {
+-        stock: el.stock,
+-        top_ask_price: el.top_ask && el.top_ask.price || 0,
+-        timestamp: el.timestamp,
++        price_abc: priceABC,
++        price_def: priceDEF,
++        ratio,
++        timestamp: serverRespond[0].timestamp > serverRespond[1].timestamp ? serverRespond[0].timestamp : serverRespond[1].timestamp,
++        upper_bound: upperBound,
++        lower_bound: lowerBound,
++        trigger_alert: (ratio > upperBound || ratio <lowerBound) ? ratio : undefined,
++        
+       };
+     })
+   }
